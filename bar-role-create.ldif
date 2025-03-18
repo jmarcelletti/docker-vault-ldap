@@ -1,0 +1,14 @@
+dn: uid={{.Username}},ou=vault-dynamic-users,ou=dynamic-users,dc=example,dc=org
+changetype: add
+objectClass: inetOrgPerson
+objectClass: shadowAccount
+cn: {{.Username}}
+uid: {{.Username}}
+sn: {{.Username}}
+userPassword:: {{.Password}}
+
+dn: cn=bar-role,ou=dynamic-role-groups,ou=dynamic-users,dc=example,dc=org
+changetype: modify
+add: member
+member: uid={{.Username}},ou=vault-dynamic-users,ou=dynamic-users,dc=example,dc=org
+-%

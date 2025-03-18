@@ -1,0 +1,62 @@
+dn: ou=users,dc=example,dc=org
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=dynamic-users,dc=example,dc=org
+objectClass: organizationalUnit
+ou: dynamic-users
+
+# Just a sample test user
+# Password: password1
+dn: uid=user1,ou=users,dc=example,dc=org
+cn: user1
+sn: Bar1
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: shadowAccount
+uid: user1
+uidNumber: 1000
+gidNumber: 1000
+homeDirectory: /home/user1
+userPassword:: e1NTSEF9bmxzcUVrVm1QVTA0MWt4UFBTREl0L1FWbnMwaDZNVWk=
+
+
+# This is the OU where we will store our dynamic vault role groups
+dn: ou=dynamic-role-groups,ou=dynamic-users,dc=example,dc=org
+changetype: add
+objectClass: organizationalUnit
+ou: dynamic-role-groups
+
+# This is the OU where we will store our dynamic vault users
+dn: ou=vault-dynamic-users,ou=dynamic-users,dc=example,dc=org
+changetype: add
+objectClass: organizationalUnit
+ou: vault-dynamic-users
+
+# This is the OU where we will store our dynamic stub "users" - every group needs a single user to exist.
+dn: ou=dynamic-stub-users,ou=dynamic-users,dc=example,dc=org
+changetype: add
+objectClass: organizationalUnit
+ou: dynamic-stub-users
+
+
+## THESE MUST EXIST WHEN WE CREATE ROLE IN VAULT - ONE TIME SETUP
+dn: cn=bar-role,ou=dynamic-stub-users,ou=dynamic-users,dc=example,dc=org
+changetype: add
+objectClass: organizationalRole
+cn: bar-role
+
+dn: cn=bar-role,ou=dynamic-role-groups,ou=dynamic-users,dc=example,dc=org
+objectClass: groupOfNames
+member: cn=bar-role,ou=dynamic-stub-users,ou=dynamic-users,dc=example,dc=org
+
+
+# Dump entire OU for vault related ldap things:
+#ldapsearch -x -b "ou=dynamic-users,dc=example,dc=org" -H ldap://localhost:389 -D cn=admin,dc=example,dc=org -x -w admin -LLL
+#ldapsearch -x -b "ou=vault-dynamic-users,ou=dynamic-users,dc=example,dc=org" -H ldap://localhost:389 -D cn=admin,dc=example,dc=org -x -w admin -LLL | grep ^dn
+#ldapsearch -x -b "ou=dynamic-role-groups,ou=dynamic-users,dc=example,dc=org" -H ldap://localhost:389 -D cn=admin,dc=example,dc=org -x -w admin -LLL
+# export VAULT_ADDR="http://localhost:8200"; export VAULT_TOKEN="root"
+# vault write ldap/role/bar-role creation_ldif=@bar-role-create.ldif deletion_ldif=@bar-role-delete.ldif rollback_ldif=@bar-role-delete.ldif default_ttl=1m max_ttl=1m username_template="{{printf \"bar-role_%s\" (random 32) | truncate 32}}" ; vault read ldap/creds/bar-role
+
+# dynamic-role-groups dynamic-stub-users vault-dynamic-users
+
